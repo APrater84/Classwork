@@ -1,0 +1,63 @@
+Homework – Forecasting 
+
+2.7: 
+The aus_arrivals data set comprises quarterly international arrivals to Australia from Japan, New Zealand, UK and the US. 
+o Use autoplot(), gg_season() and gg_subseries() to compare the differences between the arrivals from these four countries. 
+o Can you identify any unusual observations?
+
+5.9: 
+Create a training set for household wealth (hh_budget) by withholding the last four years as a test set. 
+Fit all the appropriate benchmark methods to the training set and forecast the periods covered by the test set. 
+Compute the accuracy of your forecasts. Which method does best? 
+Do the residuals from the best method resemble white noise?
+
+view(hh_budget) frequency(hh_budget) train <- hh_budget%>% filter(Year < 2013) 
+fit <- train %>% model( Mean=MEAN(Wealth)) 
+fc <- fit %>% forecast(h=4) fc %>% autoplot(hh_budget, level=NULL)
+
+3.10: 
+This exercise uses the canadian_gas data (monthly Canadian gas production in billions of cubic metres, January 1960 – February 2005). 
+a. Plot the data using autoplot(), gg_subseries() and gg_season() to look at the effect of the changing seasonality over time.1 
+b. Do an STL decomposition of the data. You will need to choose a seasonal window to allow for the changing shape of the seasonal component. 
+c. How does the seasonal shape change over time? [Hint: Try plotting the seasonal component using gg_season().] 
+d. Can you produce a plausible seasonally adjusted series? 
+e. Compare the results with those obtained using SEATS and X-11. How are they different?
+
+#1 view(canadian_gas) autoplot(canadian_gas) gg_season(canadian_gas) gg_subseries(canadian_gas)
+
+#2 canadian_gas %>% 
+model( STL(Volume ~ trend(window = 7) + 
+season(window = "periodic"), 
+robust = TRUE)) %>% 
+components() %>% 
+autoplot()
+
+#3 gg_season(canadian_gas)
+
+#d 
+dcmp <- canadian_gas %>% 
+model(STL(Volume)) 
+components(dcmp)
+
+canadian_gas %>% 
+autoplot(Volume, color='gray') + 
+autolayer(components(dcmp), 
+season_adjust, color='blue') + 
+xlab("Month") + ylab("Volume (meters)") + ggtitle("Total Usage")
+
+#e x11 is an alternative approach
+install.packages("seasonal") 
+library(seasonal) x11_dcmp <- canadian_gas %>% model(x11 = feasts:::X11(Volume, type = "additive")) %>% 
+components() autoplot(x11_dcmp) + xlab("Year") + ggtitle("Additive X11 decomposition of Canadian Usage")
+
+#e.2 and allows you to access the components 
+x11_dcmp %>% ggplot(aes(x = Month)) + geom_line(aes(y = Volume, colour = "Data")) + geom_line(aes(y = season_adjust, 
+colour = "Seasonally Adjusted")) + geom_line(aes(y = trend, colour = "Trend")) + 
+xlab("Year") + ylab("Volume (Meters)") + ggtitle("Total Canadian Usage") + 
+scale_colour_manual(values=c("gray","blue","red"), breaks=c("Data","Seasonally Adjusted","Trend"))
+
+#e.3 SEATS decomposition can be used with quarterly and monthly data 
+seats_dcmp <- canadian_gas %>% 
+model(seats = feasts:::SEATS(Volume)) %>% 
+components() 
+autoplot(seats_dcmp) + xlab("Year") + ggtitle("SEATS decomposition of total Canadian Usage")
