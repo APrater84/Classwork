@@ -9,7 +9,7 @@ library(tsibble)
 
 
 #read in table
-SunspotData <- read.table("C:/Users/adamk/Desktop/VCU School Work - Graduate/VCU DAPT Course info/Module3/DAPT 632 - Forecasting/Homework Assignments/monthly-sunspots.csv",sep=",",header=TRUE)
+SunspotData <- read.table("C:/Users/(user name)/Desktop/VCU School Work - Graduate/VCU DAPT Course info/Module3/DAPT 632 - Forecasting/Homework Assignments/monthly-sunspots.csv",sep=",",header=TRUE)
 
 #view table
 view(SunspotData)
