@@ -22,7 +22,7 @@ SunSpotDF <- SunspotData %>%
 
 SunSpotDF %>%
   filter(year(Month) > 1970) %>%
-  mutate(Sunspots = Sunspots/1000)
+  mutate(Sunspots = Sunspots/1)
   autoplot(SunSpotDF) +
   labs(title="Number of observed sunspots",
        y="Number of sunspots")
