@@ -1,0 +1,86 @@
+import codecs
+import re
+import copy
+import collections
+
+import numpy as np
+import pandas as pd
+import nltk
+from nltk.stem import PorterStemmer
+from nltk.tokenize import WordPunctTokenizer
+from __future__ import division
+import matplotlib
+
+nltk.download('stopwords')
+
+nltk.download('all')
+
+from nltk.corpus import stopwords
+
+#read data:
+with codecs.open("C:\\Users\\adamk\\Desktop\\VCU School Work - Graduate\\VCU DAPT Course info\\Module 4\\DAPT 612 - Text Mining\\Assignments\\The_Raven.txt", "r", encoding="utf-8") as f:
+    the_raven = f.read()
+with codecs.open("C:\\Users\\adamk\\Desktop\\VCU School Work - Graduate\\VCU DAPT Course info\\Module 4\\DAPT 612 - Text Mining\\Assignments\\Masque_of_red_death.txt", "r", encoding="utf-8") as f:
+    masque = f.read()
+
+#process data and check for english words:
+esw = stopwords.words('english')
+esw.append("would")
+
+#Filter Tokens:
+word_pattern = re.compile("^\w+$")
+
+#create token filter f(x)
+def get_text_counter(text):
+    tokens = WordPunctTokenizer().tokenize(PorterStemmer().stem(text))
+    tokens = list(map(lambda x: x.lower(), tokens))
+    tokens = [token for token in tokens if re.match(word_pattern, token) and token not in esw]
+    return collections.Counter(tokens), len(tokens)
+    
+#create a f(x) to calculate the absolute frequency and relative frequency of the most common words.
+def make_df(counter, size):
+    abs_freq = np.array([el[1] for el in counter])
+    rel_freq = abs_freq / size
+    index = [el[0] for el in counter]
+    df = pd.DataFrame(data=np.array([abs_freq, rel_freq]).T, index=index, columns=["Absolute frequency", "Relative frequency"])
+    df.index.name = "Most common words"
+    return df
+    
+#Analyze individual texts, print most common 10 words
+je_counter, je_size = get_text_counter(the_raven)
+make_df(je_counter.most_common(10), je_size)
+
+#print most common 1000 words, and save to CSV
+je_df = make_df(je_counter.most_common(1000), je_size)
+je_df.to_csv("JE_1000_Raven.csv")
+
+#Print 10 most common words - masque
+mrd_counter, mrd_size = get_text_counter(masque)
+make_df(mrd_counter.most_common(10), mrd_size)
+
+#Print 1000 most common words, and save to CSV - Masque
+mrd_df = make_df(mrd_counter.most_common(1000), mrd_size)
+mrd_df.to_csv("MRD_1000_Raven.csv")
+
+#Compare Text - find most common words between two texts
+all_counter = je_counter + mrd_counter
+all_df = make_df(mrd_counter.most_common(1000), 1)
+most_common_words = all_df.index.values
+
+#create a df with word frequency diffs
+df_data = []
+for word in most_common_words:
+    je_c = je_counter.get(word, 0) / je_size
+    mrd_c = mrd_counter.get(word, 0) / mrd_size
+    d = abs(je_c - mrd_c)
+    df_data.append([je_c, mrd_c, d])
+dist_df = pd.DataFrame(data=df_data, index=most_common_words,
+                       columns=["The Raven releative frequency", "Masque of Red Death relative frequency", "Relative frequency difference"])
+dist_df.index.name = "Most common words"
+dist_df.sort_values("Relative frequency difference", ascending=False, inplace=True)
+
+#display distinctive words
+dist_df.head(100)
+
+#full list
+dist_df.to_csv("Poe.csv")
